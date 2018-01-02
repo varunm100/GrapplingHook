@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace SimplePlatformer
 {
@@ -20,11 +21,16 @@ namespace SimplePlatformer
         DrawablePhysicsObject platform1;
         const float unitToPixel = 100.0f;
         const float pixelToUnit = 1 / unitToPixel;
-        float moveSpeed = 25;
+        float moveSpeed = 12;
         float jumpHeight = 250;
         float retractSpeed = 100f;
+        float cameraPlayerBuffer = 225f;
         Texture2D texture;
         KeyboardState oldState;
+        bool swinging = false;
+        List<DrawablePhysicsObject> hookList = new List<DrawablePhysicsObject>();
+        const int initialNumHooks = 10;
+        int numHooks = initialNumHooks;
 
         Joint swingJoint;
 
@@ -56,10 +62,17 @@ namespace SimplePlatformer
             mainBody.Position = new Vector2(100*pixelToUnit, 0);
             mainBody.BodyType = BodyType.Dynamic;
             
-            floor = new DrawablePhysicsObject(mainWorld, texture, new Vector2(100f, 100.0f), 1000);
-            //floor.Position = new Vector2(GraphicsDevice.Viewport.Width / 2.0f, GraphicsDevice.Viewport.Height - 50);
-            floor.Position = new Vector2(GraphicsDevice.Viewport.Width / 2.0f, 10);
+            floor = new DrawablePhysicsObject(mainWorld, texture, new Vector2(10000.0f, 100.0f), 1000);
+            floor.Position = new Vector2(GraphicsDevice.Viewport.Width / 2.0f, GraphicsDevice.Viewport.Height - 50);
+            //floor.Position = new Vector2(GraphicsDevice.Viewport.Width / 2.0f, 10);
             floor.body.BodyType = BodyType.Static;
+
+            for (int i = 1; i < (numHooks+1); i++)
+            {
+                hookList.Add(new DrawablePhysicsObject(mainWorld, texture, new Vector2(100f, 100.0f), 1000));
+                hookList[hookList.Count - 1].Position = new Vector2((GraphicsDevice.Viewport.Width)*i,10);
+                hookList[hookList.Count - 1].body.BodyType = BodyType.Static;
+            }
 
             platform1 = new DrawablePhysicsObject(mainWorld, texture, new Vector2(300f, 300f), 1000);
             platform1.Position = new Vector2(0, windowHeight);
@@ -108,21 +121,29 @@ namespace SimplePlatformer
                 mainBody.LinearVelocity += new Vector2(moveSpeed, 0) * (float)gameTime.ElapsedGameTime.TotalSeconds;
             }
 
-            if (mainBody.Position.X < 0)
-            {
-                mainBody.ApplyTorque(0.05f);
-                mainBody.ApplyForce(new Vector2(0.05f, 0));
-            }
+            //if (Keyboard.GetState().IsKeyDown(Keys.A))
+            //{
+            //    numHooks += 1;
+            //    hookList.Add(new DrawablePhysicsObject(mainWorld, texture, new Vector2(100f, 100.0f), 1000));
+            //    hookList[hookList.Count - 1].Position = new Vector2((GraphicsDevice.Viewport.Width) * (numHooks), 10);
+            //    hookList[hookList.Count - 1].body.BodyType = BodyType.Static;
+            //}
 
-            if (mainBody.Position.X*unitToPixel > windowWidth)
-            {
-                mainBody.ApplyTorque(0.05f);
-                mainBody.ApplyForce(new Vector2(-0.05f, 0));
-            }
+            //if (mainBody.Position.X < 0)
+            //{
+            //    mainBody.ApplyTorque(0.05f);
+            //    mainBody.ApplyForce(new Vector2(0.05f, 0));
+            //}
+
+            //if (mainBody.Position.X*unitToPixel > windowWidth)
+            //{
+            //    mainBody.ApplyTorque(0.05f);
+            //    mainBody.ApplyForce(new Vector2(-0.05f, 0));
+            //}
 
             if (mainBody.Position.Y < 0)
             {
-                mainBody.ApplyForce(Vector2.UnitY * 0.0f);
+                mainBody.SetTransform(new Vector2(mainBody.Position.X, 10*pixelToUnit), mainBody.Rotation);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.R))
@@ -134,7 +155,8 @@ namespace SimplePlatformer
             {
                 if (swingJoint == null)
                 {
-                    swingJoint = JointFactory.CreateRopeJoint(mainWorld, mainBody, floor.body, CoordinateHelper.ToWorld(floor.body.Position), CoordinateHelper.ToWorld(floor.body.Position));
+                    swingJoint = JointFactory.CreateRopeJoint(mainWorld, mainBody, findHook.findClosestHook(hookList, mainBody).body, CoordinateHelper.ToWorld(findHook.findClosestHook(hookList, mainBody).body.Position), CoordinateHelper.ToWorld(findHook.findClosestHook(hookList, mainBody).body.Position));
+                    swinging = true;   
                 }
             }
 
@@ -145,9 +167,9 @@ namespace SimplePlatformer
                     this.mainWorld.RemoveJoint(swingJoint);
                     mainWorld.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
                     swingJoint = null;
-                    Vector2 NewPlayerPosition = floor.body.Position - mainBody.Position;
+                    Vector2 NewPlayerPosition = findHook.findClosestHook(hookList, mainBody).body.Position - mainBody.Position;
                     mainBody.Position+=new Vector2(NewPlayerPosition.X/retractSpeed,NewPlayerPosition.Y/retractSpeed);
-                    swingJoint = JointFactory.CreateRopeJoint(mainWorld, mainBody, floor.body, CoordinateHelper.ToWorld(floor.body.Position), CoordinateHelper.ToWorld(floor.body.Position));
+                    swingJoint = JointFactory.CreateRopeJoint(mainWorld, mainBody, findHook.findClosestHook(hookList, mainBody).body, CoordinateHelper.ToWorld(findHook.findClosestHook(hookList, mainBody).body.Position), CoordinateHelper.ToWorld(findHook.findClosestHook(hookList, mainBody).body.Position));
                 }
             }
 
@@ -158,10 +180,9 @@ namespace SimplePlatformer
                     this.mainWorld.RemoveJoint(swingJoint);
                     mainWorld.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
                     swingJoint = null;
-                    Vector2 NewPlayerPosition = floor.body.Position - mainBody.Position;
+                    Vector2 NewPlayerPosition = findHook.findClosestHook(hookList, mainBody).body.Position - mainBody.Position;
                     mainBody.Position -= new Vector2(NewPlayerPosition.X/retractSpeed, NewPlayerPosition.Y/retractSpeed);
-                    swingJoint = JointFactory.CreateRopeJoint(mainWorld, mainBody, floor.body, CoordinateHelper.ToWorld(floor.body.Position), CoordinateHelper.ToWorld(floor.body.Position));
-                    
+                    swingJoint = JointFactory.CreateRopeJoint(mainWorld, mainBody, findHook.findClosestHook(hookList, mainBody).body, CoordinateHelper.ToWorld(findHook.findClosestHook(hookList, mainBody).body.Position), CoordinateHelper.ToWorld(findHook.findClosestHook(hookList, mainBody).body.Position));   
                 }
             }
 
@@ -172,7 +193,14 @@ namespace SimplePlatformer
                     this.mainWorld.RemoveJoint(swingJoint);
                     mainWorld.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
                     swingJoint = null;
+                    swinging = false;
                 }
+            }
+
+            //GraphicsDevice.Viewport = new Viewport((int)(-mainBody.Position.X*unitToPixel+400),0,(int)windowWidth,(int)windowHeight);
+            if (mainBody.Position.Y*unitToPixel > windowHeight)
+            {
+                mainBody.SetTransform(new Vector2(mainBody.Position.X, (windowHeight-10)*pixelToUnit),mainBody.Rotation);
             }
 
             oldState = keyboardState;
@@ -183,11 +211,15 @@ namespace SimplePlatformer
         {
             GraphicsDevice.Clear(Color.Black);
 
-            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque, transformMatrix: Matrix.CreateTranslation(new Vector3((mainBody.Position.X * unitToPixel) - cameraPlayerBuffer, 0, 0) * -1));
             Vector2 position = mainBody.Position * unitToPixel;
             Vector2 scale = new Vector2(50 / (float)texture.Width, 50 / (float)texture.Height);
             spriteBatch.Draw(texture, position, null, Color.White, mainBody.Rotation, new Vector2(texture.Width / 2.0f, texture.Height / 2.0f), scale, SpriteEffects.None, 0);
             floor.Draw(spriteBatch);
+            foreach(var i in hookList)
+            {
+                i.Draw(spriteBatch);
+            }
             platform1.Draw(spriteBatch);
             spriteBatch.End();
 

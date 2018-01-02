@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="CoordinateHelper.cs" />
     <Compile Include="DrawablePhysicsObject.cs" />
+    <Compile Include="findHook.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
