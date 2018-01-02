@@ -15,18 +15,24 @@ namespace SimplePlatformer
 
         }
 
+        public static bool stopNull = false;
+
         public static DrawablePhysicsObject findClosestHook(List<DrawablePhysicsObject> hooklist, Body playerBody)
         {
-            List<double> distances = new List<double>();
-            foreach(var i in hooklist)
+            if (!stopNull)
             {
-                distances.Add(Vector2.Distance(i.body.Position, playerBody.Position));
-                //Console.Write(Vector2.Distance(i.body.Position, playerBody.Position).ToString() + " , ");
+                List<double> distances = new List<double>();
+                foreach (var i in hooklist)
+                {
+                    distances.Add(Vector2.Distance(i.body.Position, playerBody.Position));
+                }
+                double minVal = distances.Min();
+                return hooklist[distances.IndexOf(minVal)];
+            } else
+            {
+                stopNull = false;
+                return hooklist[0];
             }
-            //Console.WriteLine("");
-            double minVal = distances.Min();
-            ///Console.WriteLine("Index at " + distances.IndexOf(minVal).ToString());
-            return hooklist[distances.IndexOf(minVal)];
         }
 
         public static double getAngle(Vector2 point1, Vector2 point2)

@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace SimplePlatformer
 {
@@ -29,7 +30,7 @@ namespace SimplePlatformer
         KeyboardState oldState;
         bool swinging = false;
         List<DrawablePhysicsObject> hookList = new List<DrawablePhysicsObject>();
-        const int initialNumHooks = 10;
+        const int initialNumHooks = 5;
         int numHooks = initialNumHooks;
         float currentX = 0.0f;
         float moveVelocity = 125f;
@@ -76,14 +77,14 @@ namespace SimplePlatformer
             mainBody.Position = new Vector2(100*pixelToUnit, 0);
             mainBody.BodyType = BodyType.Dynamic;
             
-            floor = new DrawablePhysicsObject(mainWorld, hotLava, new Vector2(5000.0f, 100.0f), 1000);
+            floor = new DrawablePhysicsObject(mainWorld, hotLava, new Vector2(700.0f*(numHooks-1), 100.0f), 1000);
             floor.Position = new Vector2(GraphicsDevice.Viewport.Width / 2.0f, GraphicsDevice.Viewport.Height - 50);
             floor.body.BodyType = BodyType.Static;
 
             for (int i = 1; i < (numHooks+1); i++)
             {
                 hookList.Add(new DrawablePhysicsObject(mainWorld, this.Content.Load<Texture2D>("hook-sprite"), new Vector2(100f, 50f), 1000));
-                hookList[hookList.Count - 1].Position = new Vector2((GraphicsDevice.Viewport.Width)*i/2,10);
+                hookList[hookList.Count - 1].Position = new Vector2((GraphicsDevice.Viewport.Width)*(i/2),10);
                 hookList[hookList.Count - 1].body.BodyType = BodyType.Static;
                 hookList[hookList.Count - 1].body.Rotation = 180;
             }
@@ -136,6 +137,7 @@ namespace SimplePlatformer
             if ((mainBody.Position.Y * unitToPixel) > windowHeight-107)
             {
                 mainBody.SetTransform(new Vector2(100 * pixelToUnit, 0), 0);
+                findHook.stopNull = true;
             }
 
             if (mainBody.AngularVelocity >= maxAngularVelocity && mainBody.AngularVelocity > 0)
