@@ -114,7 +114,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\box-texture.png" />
+    <Content Include="Content\character-sprite.png" />
     <Content Include="Content\crate.jpg" />
+    <Content Include="Content\fire.png" />
+    <Content Include="Content\hook-sprite.png" />
+    <Content Include="Content\hot-lava-minecraft.jpeg" />
+    <Content Include="Content\rope-sprite.png" />
+    <Content Include="Content\rounded-sprite.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MonoGame\v3.0\MonoGame.Content.Builder.targets" />
