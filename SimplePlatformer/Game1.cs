@@ -28,6 +28,7 @@ namespace SimplePlatformer
         float cameraPlayerBuffer = 225f;
         Texture2D texture;
         KeyboardState oldState;
+        MouseState oldMouseState;
         bool swinging = false;
         List<DrawablePhysicsObject> hookList = new List<DrawablePhysicsObject>();
         const int initialNumHooks = 5;
@@ -71,20 +72,28 @@ namespace SimplePlatformer
             characterSprite = this.Content.Load<Texture2D>("crate");
             hotLava = this.Content.Load<Texture2D>("fire");
             ropeTexture = this.Content.Load<Texture2D>("rope-sprite");
-            mainWorld = new World(new Vector2(0, 20f));
+            mainWorld = new World(new Vector2(0, 9.8f));
             Vector2 size = new Vector2(10, 10);
             mainBody = BodyFactory.CreateRectangle(mainWorld, size.X * pixelToUnit, size.Y * pixelToUnit, (float)0.1);
             mainBody.Position = new Vector2(100*pixelToUnit, 0);
             mainBody.BodyType = BodyType.Dynamic;
             
-            floor = new DrawablePhysicsObject(mainWorld, hotLava, new Vector2(700.0f*(numHooks-1), 100.0f), 1000);
-            floor.Position = new Vector2(GraphicsDevice.Viewport.Width / 2.0f, GraphicsDevice.Viewport.Height - 50);
+            floor = new DrawablePhysicsObject(mainWorld, hotLava, new Vector2(900.0f*(numHooks-1), 100.0f), 1000);
+            floor.Position = new Vector2((GraphicsDevice.Viewport.Width / 2.0f)-250, GraphicsDevice.Viewport.Height - 50);
             floor.body.BodyType = BodyType.Static;
 
             for (int i = 1; i < (numHooks+1); i++)
             {
                 hookList.Add(new DrawablePhysicsObject(mainWorld, this.Content.Load<Texture2D>("hook-sprite"), new Vector2(100f, 50f), 1000));
                 hookList[hookList.Count - 1].Position = new Vector2((GraphicsDevice.Viewport.Width)*(i/2),10);
+                hookList[hookList.Count - 1].body.BodyType = BodyType.Static;
+                hookList[hookList.Count - 1].body.Rotation = 180;
+            }
+
+            for (int i = 1; i < (numHooks + 1); i++)
+            {
+                hookList.Add(new DrawablePhysicsObject(mainWorld, this.Content.Load<Texture2D>("hook-sprite"), new Vector2(100f, 50f), 1000));
+                hookList[hookList.Count - 1].Position = new Vector2(-(GraphicsDevice.Viewport.Width) * (i / 2), 10);
                 hookList[hookList.Count - 1].body.BodyType = BodyType.Static;
                 hookList[hookList.Count - 1].body.Rotation = 180;
             }
@@ -106,6 +115,7 @@ namespace SimplePlatformer
             mainWorld.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
 
             KeyboardState keyboardState = Keyboard.GetState();
+            MouseState mouseState = Mouse.GetState();
 
             ropeOrigin = new Vector2(ropeTexture.Bounds.Center.X, ropeTexture.Bounds.Center.Y);
 
@@ -207,6 +217,9 @@ namespace SimplePlatformer
             {
                 mainBody.Rotation = 0;
             }
+
+            //Console.WriteLine(mainBody.);
+            oldMouseState = mouseState;
             oldState = keyboardState;
             base.Update(gameTime);
         }
@@ -217,7 +230,7 @@ namespace SimplePlatformer
 
             currentX += moveVelocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
             spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque, transformMatrix: Matrix.CreateTranslation(new Vector3((mainBody.Position.X * unitToPixel) - cameraPlayerBuffer, 0, 0) * -1));
-            //spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.Opaque, transformMatrix: Matrix.CreateTranslation(new Vector3(currentX, 0, 0) * -1));
+            
             Vector2 position = mainBody.Position * unitToPixel;
             Vector2 scale = new Vector2(50 / (float)texture.Width, 50 / (float)texture.Height);
             spriteBatch.Draw(characterSprite, position, null, Color.White, mainBody.Rotation, new Vector2(texture.Width / 2.0f, texture.Height / 2.0f), scale, SpriteEffects.None, 0);
